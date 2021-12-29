@@ -1,4 +1,5 @@
 FILE=$1
+MODEL_PATH=$2
 GPU=0
 C=192
 S=384
@@ -14,4 +15,4 @@ python main.py --mode compress \
        --last_channels ${S} \
        --hyper_channels ${Z} \
        --model_prefix ./ \
-       --model_pretrained [model_path]
+       --model_pretrained ${MODEL_PATH}

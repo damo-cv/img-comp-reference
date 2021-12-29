@@ -55,7 +55,7 @@ def train(epoch):
         # Encoder
         y = encode_model(image)
         y_tilde = quant_noise(y)
-        y_tilde2 = quant_ste(y)   # quant_ste(y), y_tilde  # modified
+        y_tilde2 = quant_ste(y)   # quant_ste(y), y_tilde 
         # hyper predict 
         z = hyper_encode_model(y)
         z_tilde = quant_noise(z)
@@ -88,10 +88,6 @@ def train(epoch):
                                 para3.reshape(ny, opt.num_parameter, cy, 1, hy, wy)],
                                 dim=3)
         para_merge = para_merge.reshape(ny, -1, hy, wy)
-        # loss_rate_y = 0.7 * criterion_gauss(y_tilde, para_merge).sum() + \
-        #               0.1 * criterion_gauss(y_tilde, para1).sum() + \
-        #               0.1 * criterion_gauss(y_tilde, para2).sum() + \
-        #               0.1 * criterion_gauss(y_tilde, para3).sum()   # modified
         loss_rate_y = criterion_gauss(y_tilde, para_merge).sum()
         loss_rate_y = loss_rate_y / np.log(2) / num_pixels / opt.batchSize
         total_loss = loss_distortion * opt.alpha + loss_rate_y + loss_rate_z
@@ -149,7 +145,7 @@ def test(epoch=0, shape_num=64):
             z = hyper_encode_model(y)
             z_hat = quant_noise(z)
             z_feature = hyper_decode_model(z_hat)
-            # Regressive model, modified
+            # Regressive model
             para1, para2, para3, S, U, R = auto_regressive_model(y_hat, z_feature, criterion_gauss)
             # Decoder
             x_hat = decode_model(y_hat)
@@ -225,7 +221,7 @@ def compress(shape_num=64):
         z = hyper_encode_model(y)
         z_hat = quant_noise(z)
         z_feature = hyper_decode_model(z_hat)
-        # Regressive model, modified
+        # Regressive model
         para1, para2, para3, S, U, R = auto_regressive_model(y_hat, z_feature, criterion_gauss)
         # Decoder
         x_hat = decode_model(y_hat)
@@ -253,8 +249,7 @@ def compress(shape_num=64):
         log.logger.info("%s - PSNR:%.2f, MS-SSIM:%.5f, bpp:%.4f/%.4f"%(img_name,psnr,msssim,bpp_y,bpp_z))
         
         ## Compress
-        y_symbol = y_hat.long() + opt.table_range - 1  # modified
-        # y_symbol = y_hat.long() + opt.table_range
+        y_symbol = y_hat.long() + opt.table_range - 1 
         _, cy, hy, wy = y_symbol.shape
         z_symbol = z_hat.long() + opt.table_range - 1
         _, cz, hz, wz = z_symbol.shape
@@ -290,15 +285,6 @@ def compress(shape_num=64):
                 encode_channel(pmf_y[0,0].cpu().numpy(), y_symbol[:,:,yi,yj].detach().cpu().numpy(), enc)
                 y_quant[:,:,yi,yj] = y_hat[:,:,yi,yj]
 
-        # for yi in range(hy):
-        #     print(yi, '-', hy)
-        #     for yj in range(wy):
-        #         pmf_y_logits = criterion_gauss(tables.repeat([cy,1,1,1]).permute(3,0,1,2), 
-        #                                        para_merge[:,:,yi:yi+1,yj:yj+1].repeat(opt.table_range*2-2,1,1,1))
-        #         pmf_y = (- pmf_y_logits).exp_().permute(2,3,1,0)  # [hy, wy, c, Lp-2]
-        #         # print(yj, '-', wy)
-        #         encode_channel(pmf_y[0,0].cpu().numpy(), y_symbol[:,:,yi,yj].detach().cpu().numpy(), enc)
-        enc.finish()  # flush any bits to terminate the coding
         bitout.close()
 
 def decompress(shape_num=64):
@@ -384,19 +370,17 @@ def checkpoint(epoch, model_prefix='checkpoint/'):
     torch.save(state, model_out_path)
     log.logger.info("Checkpoint saved to {}".format(model_out_path))
 
-def restore(model_pretrained):  # modified
+def restore(model_pretrained):
     log.logger.info("===> Loading pre-trained model: %s" % model_pretrained)
     state = torch.load(model_pretrained, map_location=torch.device('cpu'))
-    if(1):
-        encode_model.load_state_dict(state['encode'].state_dict())
-        decode_model.load_state_dict(state['decode'].state_dict())
-        log.logger.info('Load main AE model.')
-    if(1):
-        hyper_encode_model.load_state_dict(state['pencode'].state_dict())
-        hyper_decode_model.load_state_dict(state['pdecode'].state_dict())
-        auto_regressive_model.load_state_dict(state['autoregressive'].state_dict())
-        prob_model.load_state_dict(state['prob'].state_dict())
-        log.logger.info('Load HyperAE and prob model.')
+    encode_model.load_state_dict(state['encode'].state_dict())
+    decode_model.load_state_dict(state['decode'].state_dict())
+    log.logger.info('Load main AE model.')
+    hyper_encode_model.load_state_dict(state['pencode'].state_dict())
+    hyper_decode_model.load_state_dict(state['pdecode'].state_dict())
+    auto_regressive_model.load_state_dict(state['autoregressive'].state_dict())
+    prob_model.load_state_dict(state['prob'].state_dict())
+    log.logger.info('Load HyperAE and prob model.')
 
 
 if __name__ == "__main__":
@@ -467,8 +451,8 @@ if __name__ == "__main__":
     prob_model = Entropy(opt.channels)
     # hyper model
     hyper_encode_model = HyperEncoder(opt.last_channels, opt.hyper_channels, opt.channels)
-    hyper_decode_model = HyperDecoder(opt.hyper_channels, opt.last_channels*2, opt.channels)  # modified
-    # Auto Regressive model,  modified
+    hyper_decode_model = HyperDecoder(opt.hyper_channels, opt.last_channels*2, opt.channels)
+    # Auto Regressive model
     auto_regressive_model = RefAutoRegressiveModel(
                               cin=opt.last_channels,
                               chyper=opt.last_channels*2,
@@ -480,7 +464,7 @@ if __name__ == "__main__":
     criterion_gauss = DiscretizedMixGaussLoss(rgb_scale=False, x_min=-opt.table_range, x_max=opt.table_range-1,
                                               num_p=opt.num_parameter, L=opt.table_range*2)
 
-    # Init modules  # modified
+    # Init modules
     init_method = xavier_normal_init  # xavier_normal_init
     encode_model.apply(init_method)
     decode_model.apply(init_method)
@@ -542,7 +526,7 @@ if __name__ == "__main__":
                                              lr=opt.lr,
                                              num_training_instances=len(train_set),
                                              stop_epoch=opt.nEpochs,
-                                             warmup_epoch=opt.nEpochs*0.,  # modified
+                                             warmup_epoch=opt.nEpochs*0.,
                                              stage_list=lr_step,
                                              stage_decay=0.75)
         lr_scheduler.update_lr(opt.epoch_pretrained*len(train_set))
@@ -559,7 +543,7 @@ if __name__ == "__main__":
                 train(epoch)
                 if epoch%10==0:
                     test(epoch)
-                if epoch in ckpt_stage:  # modified
+                if epoch in ckpt_stage:
                     checkpoint(epoch, opt.model_prefix)
         elif(opt.mode == "test"):
             test()

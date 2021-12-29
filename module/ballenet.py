@@ -1,7 +1,4 @@
 # coding=utf-8
-""""
-BalleNet v2: 4 conv layer (k5s2, k5s2, k5s2, k5s2) in E, and 4 deconv layer (k5s2, k5s2, k5s2, k5s2) in D.
-"""
 import torch
 from torch import nn
 from .ops import GDN, GSDN, Upsample
