@@ -1,3 +1,5 @@
+![Python >=3.5](https://img.shields.io/badge/Python->=3.6-yellow.svg) ![PyTorch >=1.0](https://img.shields.io/badge/PyTorch->=1.1-blue.svg)
+
 # [ICLR2021] Learning Accurate Entropy Model with Global Reference for Image Compression [[pdf]](https://arxiv.org/abs/2010.08321)
 
 The official repository for [Learning Accurate Entropy Model with Global Reference for Image Compression](https://arxiv.org/abs/2010.08321).
